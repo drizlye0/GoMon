@@ -12,6 +12,7 @@ var (
 
 type Storage struct {
 	Pokemon interface {
+		Create(context.Context, *Pokemon) error
 		GetByID(context.Context, int64) (*Pokemon, error)
 	}
 }
