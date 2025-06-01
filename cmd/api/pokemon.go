@@ -14,7 +14,7 @@ type createPokemonPayload struct {
 	Type      []string `json:"type"`
 	Region    string   `json:"region"`
 	Abilities []string `json:"abilities"`
-	Game      string   `json:"game"`
+	Game      []string `json:"game"`
 }
 
 func (app *application) getPokemonHandler(w http.ResponseWriter, r *http.Request) {

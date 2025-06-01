@@ -13,7 +13,7 @@ type Pokemon struct {
 	Type       []string `json:"type"`
 	Region     string   `json:"region"`
 	Abilities  []string `json:"abilities"`
-	Game       string   `json:"game"`
+	Game       []string `json:"game"`
 	Created_At string   `json:"created_at"`
 	Updated_At string   `json:"updated_at"`
 }
@@ -39,7 +39,7 @@ func (s *PokemonStore) Create(ctx context.Context, pokemon *Pokemon) error {
 		pq.Array(pokemon.Type),
 		pokemon.Region,
 		pq.Array(pokemon.Abilities),
-		pokemon.Game,
+		pq.Array(pokemon.Game),
 	).Scan(
 		&pokemon.Created_At,
 		&pokemon.Updated_At,
@@ -74,7 +74,7 @@ func (s *PokemonStore) GetByID(ctx context.Context, id int64) (*Pokemon, error) 
 		&pokemon.Name,
 		pq.Array(&pokemon.Type),
 		&pokemon.Region,
-		&pokemon.Game,
+		pq.Array(&pokemon.Game),
 		pq.Array(&pokemon.Abilities),
 		&pokemon.Created_At,
 		&pokemon.Updated_At,
