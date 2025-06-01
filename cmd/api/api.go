@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/drizlye0/GoMon/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -23,6 +24,7 @@ type dbConfig struct {
 
 type application struct {
 	config config
+	store  *store.Storage
 }
 
 func (app *application) mount() http.Handler {
@@ -35,6 +37,12 @@ func (app *application) mount() http.Handler {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.checkHealthHandler)
+
+		r.Route("/pokemon", func(r chi.Router) {
+			r.Route("/{pokemonID}", func(r chi.Router) {
+				r.Get("/", app.getPokemonHandler)
+			})
+		})
 	})
 
 	return r

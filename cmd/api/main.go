@@ -5,6 +5,7 @@ import (
 
 	"github.com/drizlye0/GoMon/internal/db"
 	"github.com/drizlye0/GoMon/internal/env"
+	"github.com/drizlye0/GoMon/internal/store"
 )
 
 func main() {
@@ -31,8 +32,11 @@ func main() {
 
 	defer db.Close()
 
+	store := store.NewStorage(db)
+
 	app := application{
 		config: *cfg,
+		store:  store,
 	}
 
 	router := app.mount()
