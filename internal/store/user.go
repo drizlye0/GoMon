@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -42,7 +43,7 @@ func (p *password) Compare() error {
 	return bcrypt.CompareHashAndPassword(p.hash, []byte(*p.text))
 }
 
-func (s *UserStore) Create(ctx context.Context, user *User) error {
+func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 	query := `
 		INSERT INTO users(username, email, password, is_active)
 		VALUES ($1, $2, $3, $4)
@@ -52,7 +53,7 @@ func (s *UserStore) Create(ctx context.Context, user *User) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryContextTimeout)
 	defer cancel()
 
-	err := s.db.QueryRowContext(
+	err := tx.QueryRowContext(
 		ctx,
 		query,
 		user.Username,
@@ -108,6 +109,38 @@ func (s *UserStore) Delete(ctx context.Context, userID int64) error {
 	defer cancel()
 
 	_, err := s.db.ExecContext(ctx, query, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserStore) CreateAndInvite(ctx context.Context, user *User, token string, expiry time.Duration) error {
+	return withTx(s.db, ctx, func(tx *sql.Tx) error {
+		// create user
+		if err := s.Create(ctx, tx, user); err != nil {
+			return err
+		}
+		// create invitation
+		if err := s.createUserInvitation(ctx, tx, token, user.ID, expiry); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (s *UserStore) createUserInvitation(ctx context.Context, tx *sql.Tx, token string, userId int64, expiry time.Duration) error {
+	query := `
+		INSERT INTO user_invitations(token, user_id, expiry)
+		VALUES ($1, $2, $3)
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryContextTimeout)
+	defer cancel()
+
+	_, err := tx.ExecContext(ctx, query, token, userId, time.Now().Add(expiry))
 	if err != nil {
 		return err
 	}
